@@ -2,11 +2,18 @@ import os
 import telebot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
-# Token configurado con doble compatibilidad (Railway variables + Token directo)
-TOKEN = os.getenv("TELEGRAM_TOKEN", "8829957606:AAHL5P0y3FzfHuFTVMSk-9ZG69twJsD9S6I")
+# Configuración con tu nuevo token limpio y tu ID exclusivo de seguridad
+TOKEN = "8620258395:AAE2XAQa73pnApjdP6ozdEcun-q9b-lXsE8"
 bot = telebot.TeleBot(TOKEN)
 
+ADMIN_ID = 5019002345  # Tu ID exclusivo de Telegram
+
 user_data = {}
+
+# Filtro de seguridad estricto: Solo responde a tu ID, ignora a cualquier otro usuario
+@bot.message_handler(func=lambda message: message.from_user.id != ADMIN_ID)
+def block_unauthorized(message):
+    return
 
 def show_main_menu(chat_id):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
@@ -22,14 +29,18 @@ def show_main_menu(chat_id):
 
 @bot.message_handler(commands=['start', 'menu'])
 def send_welcome(message):
-    show_main_menu(message.chat.id)
+    if message.from_user.id == ADMIN_ID:
+        show_main_menu(message.chat.id)
 
 @bot.message_handler(func=lambda m: m.text and m.text.lower() in ["hola", "empezar", "inicio", "bot", "menu"])
 def greeting_handler(message):
-    show_main_menu(message.chat.id)
+    if message.from_user.id == ADMIN_ID:
+        show_main_menu(message.chat.id)
 
 @bot.message_handler(func=lambda m: m.text in ["⚽ Analizar Fútbol", "🏀 Analizar Baloncesto", "🎾 Analizar Tenis", "⚾ Analizar MLB (Béisbol)"])
 def select_sport(message):
+    if message.from_user.id != ADMIN_ID:
+        return
     sport_map = {
         "⚽ Analizar Fútbol": "Fútbol",
         "🏀 Analizar Baloncesto": "Baloncesto",
@@ -104,8 +115,9 @@ def calculate_analytics(message):
         bot.send_message(chat_id, "⚠ Error: Envía exactamente **3 números separados por comas** (Ej: `5, 80, 2`).")
 
 if __name__ == "__main__":
-    print("Bot analítico con IA iniciado correctamente...")
+    print("Bot analítico privado iniciado correctamente...")
     bot.infinity_polling()
+    
         
     
         
