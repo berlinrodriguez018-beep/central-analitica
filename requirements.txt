@@ -1,2 +1,0 @@
-python-telegram-bot[http]>=20.0
-httpx
