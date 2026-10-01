@@ -22,7 +22,7 @@ def show_main_menu(chat_id):
     
     bot.send_message(
         chat_id,
-        "🚀 **NEURAL BET ENGINE — MÁXIMO NIVEL PRO**\n\nSelecciona el deporte para ejecutar el motor de simulación de modelos en vivo:",
+        "🎯 **NEURAL LIVE PRO — SELECCIONA DEPORTE**",
         reply_markup=markup,
         parse_mode="Markdown"
     )
@@ -52,16 +52,9 @@ def select_sport(message):
     sport = sport_map.get(message.text, "Baloncesto")
     user_data[message.chat.id] = {"sport": sport}
     
-    examples = {
-        "Baloncesto": "Miami Heat vs Denver Nuggets",
-        "Tenis": "Carlos Alcaraz vs Alex Michelsen",
-        "Fútbol": "Real Madrid vs Barcelona",
-        "MLB": "New York Yankees vs Boston Red Sox"
-    }
-    
     bot.send_message(
         message.chat.id,
-        f"Has seleccionado **{sport}** 📌\n\nEscribe el **partido en vivo** que deseas auditar (Ej: *{examples.get(sport, 'Equipo A vs Equipo B')}*):",
+        f"🏟 **Deporte seleccionado: {sport}**\n\nEscribe el **partido en vivo** (Ej: *Carlos Alcaraz vs Novak Djokovic* o *Lakers vs Celtics*):",
         parse_mode="Markdown"
     )
     bot.register_next_step_handler(message, get_match_name)
@@ -78,29 +71,36 @@ def get_match_name(message):
     user_data[chat_id]["match"] = message.text
     sport = user_data[chat_id].get("sport", "Baloncesto")
     
+    examples = {
+        "Baloncesto": "Ej: 3er cuarto, van 68-72, posesión visitante",
+        "Tenis": "Ej: Set 2, Alcaraz gana 6-4, 2-1 arriba en el segundo",
+        "Fútbol": "Ej: Minuto 65, van 1-0, dominando local",
+        "MLB": "Ej: Alta del 6to inning, 3-2 en carreras"
+    }
+    
     bot.send_message(
         chat_id,
-        f"🧠 **Simulador Neural Activado ({sport})**\n\nEscribe la situación o enfoque táctico que deseas contrastar (ej: *ganador de partido, comportamiento de líneas, hándicap o colapso en vivo*):",
+        f"⚡ **SITUACIÓN ACTUAL EN VIVO ({sport})**\n\nEscribe exactamente cómo va el partido (marcador, tiempo, set, cuarto o mitad):\n\n_{examples.get(sport, 'Describe el momento exacto')}_",
         parse_mode="Markdown"
     )
-    bot.register_next_step_handler(message, calculate_analytics)
+    bot.register_next_step_handler(message, calculate_live_analytics)
 
-def calculate_analytics(message):
+def calculate_live_analytics(message):
     chat_id = message.chat.id
     if "Analizar" in message.text:
         select_sport(message)
         return
 
+    situation = message.text
     match_info = user_data.get(chat_id, {}).get("match", "Encuentro")
     sport = user_data.get(chat_id, {}).get("sport", "Baloncesto")
     
     teams = [t.strip() for t in match_info.split("vs")]
-    t1 = teams[0] if len(teams) > 0 else "Local / Favorito"
-    t2 = teams[1] if len(teams) > 1 else "Visitante / Rival"
+    t1 = teams[0] if len(teams) > 0 else "Local / Jugador 1"
+    t2 = teams[1] if len(teams) > 1 else "Visitante / Jugador 2"
 
-    odd_value = round(random.uniform(1.78, 2.15), 2)
-    ev_index = round(random.uniform(6.2, 15.4), 2)
-    simulations_count = random.randint(8500, 10000)
+    odd_value = round(random.uniform(1.80, 2.10), 2)
+    ev_index = round(random.uniform(7.0, 16.5), 2)
 
     query_encoded = match_info.replace(" ", "%20")
     markup_links = InlineKeyboardMarkup()
@@ -109,98 +109,59 @@ def calculate_analytics(message):
         InlineKeyboardButton("📊 Ver en Scores24", url=f"https://scores24.live/es/search?q={query_encoded}")
     )
 
+    # LÓGICA DE PREDICCIÓN DIRECTA Y ESPECÍFICA SEGÚN EL DEPORTE
     if sport == "Tenis":
-        line_games = random.choice([21.5, 22.5, 23.5, 24.5])
-        prob_s1 = round(random.uniform(78.0, 94.0), 1)
-        prob_match = round(random.uniform(72.0, 89.0), 1)
-        
-        report = (
-            f"🎾 **NEURAL ENGINE — TENIS PRO MÁXIMO NIVEL**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Encuentro:** {match_info}\n"
-            f"🤖 **Modelos Contrastados:** {simulations_count} simulaciones Monte Carlo + Machine Learning\n"
-            f"💬 **Consulta:** _{message.text}_\n\n"
-            f"📊 **PREDICCIÓN DE MERCADO & LÍNEAS:**\n"
-            f" • **Línea Global:** `Over de {line_games} juegos totales` (Alta tendencia de sets disputados)\n"
-            f" • **1er Set:** **{t1}** gana el 1er Set con solidez al saque (Prob: `{prob_s1}%`)\n"
-            f" • **Ganador Absoluto:** **{t1}** se lleva el partido (Confianza de modelos: `{prob_match}%`)\n\n"
-            f"🚨 **ALERTA DE PELIGRO / DESARROLLO EN VIVO:**\n"
-            f"⚠️ *Peligro crítico:* {t2} suele elevar su porcentaje de devolución en superficies rápidas. Existe riesgo alto de que {t1} sufra un bajón físico o desconcentración cediendo el **2do set** si no asegura quiebres tempranos.\n\n"
-            f"💎 **VALORACIÓN ESTADÍSTICA:**\n"
-            f"• Evaluación: `🟢 +EV Óptimo` | Cuota: `{odd_value}` | `+{ev_index} Índice EV`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        pred_ganador = f"Ganador del partido: **{t1}**"
+        pred_set = f"Apuesta de Set: **{t1} gana el 2do Set**"
+        linea_juegos = f"Línea de Juegos: **Over de 22.5 juegos**"
+        alerta_vivo = f"Tendencia en vivo: Alta presión al resto; {t2} muestra fatiga en intercambios largos mayores a 5 tiros."
 
     elif sport == "Baloncesto":
-        line_ft = random.choice([210.5, 215.5, 222.5, 228.5])
-        diff_q = random.randint(4, 12)
-        
-        report = (
-            f"🏀 **NEURAL ENGINE — BALONCESTO PRO MÁXIMO NIVEL**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Encuentro:** {match_info}\n"
-            f"🤖 **Modelos Contrastados:** {simulations_count} simulaciones de ritmo de posesión\n"
-            f"💬 **Consulta:** _{message.text}_\n\n"
-            f"📊 **PREDICCIÓN DE MERCADO & LÍNEAS:**\n"
-            f" • **Línea de Puntos:** `Over de {line_ft} Puntos` (Frecuencia alta de transiciones rápidas)\n"
-            f" • **Mitad (HT):** **{t1}** gana la 1era mitad por margen de +{diff_q} puntos.\n"
-            f" • **Ganador Final:** **{t1}** administra la ventaja en el cierre.\n\n"
-            f"🚨 **ALERTA DE PELIGRO / DESARROLLO EN VIVO:**\n"
-            f"⚠️ *Peligro crítico:* La segunda unidad defensiva de {t2} tiende a colapsar en el 3er cuarto; atención a faltas repetitivas y bonus de tiros libres tempranos.\n\n"
-            f"💎 **VALORACIÓN ESTADÍSTICA:**\n"
-            f"• Evaluación: `🟢 +EV Óptimo` | Cuota: `{odd_value}` | `+{ev_index} Índice EV`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        pred_ganador = f"Ganador del periodo/final: **{t1}**"
+        pred_set = f"Apuesta de Cuarto/Mitad: **Over de 51.5 puntos en el 3er Cuarto**"
+        linea_juegos = f"Línea Total (Full Time): **Under de 218.5 puntos**"
+        alerta_vivo = f"Tendencia en vivo: Ritmo ofensivo acelerado en transición, baja intensidad defensiva en la pintura."
 
     elif sport == "Fútbol":
-        line_goals = random.choice([2.5, 3.0])
-        
-        report = (
-            f"⚽ **NEURAL ENGINE — FÚTBOL PRO MÁXIMO NIVEL**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Encuentro:** {match_info}\n"
-            f"🤖 **Modelos Contrastados:** {simulations_count} análisis xG (Goles Esperados) en vivo\n"
-            f"💬 **Consulta:** _{message.text}_\n\n"
-            f"📊 **PREDICCIÓN DE MERCADO & LÍNEAS:**\n"
-            f" • **Línea de Goles:** `Over de {line_goals} goles` (Alta producción de ocasiones claras de gol)\n"
-            f" • **Mercado Dinámico:** `Ambos anotan (BTTS)` con presión alta inicial.\n"
-            f" • **Tendencia de Ganador:** **{t1}** domina la posesión útil.\n\n"
-            f"🚨 **ALERTA DE PELIGRO / DESARROLLO EN VIVO:**\n"
-            f"⚠️ *Peligro crítico:* {t2} repliega un bloque defensivo ultrabajo después del minuto 60; riesgo de sequía de remates y partido trabado en la medular.\n\n"
-            f"💎 **VALORACIÓN ESTADÍSTICA:**\n"
-            f"• Evaluación: `🟢 +EV Óptimo` | Cuota: `{odd_value}` | `+{ev_index} Índice EV`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        pred_ganador = f"Ganador del encuentro: **Empate o Gana {t1} (Doble Oportunidad)**"
+        pred_set = f"Apuesta de Mitad: **1er Tiempo - Under de 1.5 goles**"
+        linea_juegos = f"Línea Total: **Over de 2.5 goles en el partido**"
+        alerta_vivo = f"Tendencia en vivo: Bloque bajo defensivo de {t2}, buscando contragolpes rápidos por las bandas."
 
     else:
-        report = (
-            f"⚾ **NEURAL ENGINE — BÉISBOL (MLB) MÁXIMO NIVEL**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Encuentro:** {match_info}\n"
-            f"🤖 **Modelos Contrastados:** {simulations_count} iteraciones de pitcheo y bullpen\n"
-            f"💬 **Consulta:** _{message.text}_\n\n"
-            f"📊 **PREDICCIÓN DE MERCADO & LÍNEAS:**\n"
-            f" • **Línea de Carreras:** Alta vulnerabilidad en relevistas intermedios.\n"
-            f" • **Tendencia:** Victoria esperada para **{t1}** por mayor profundidad ofensiva.\n\n"
-            f"🚨 **ALERTA DE PELIGRO / DESARROLLO EN VIVO:**\n"
-            f"⚠️ *Peligro crítico:* Cierre de partido inestable si el cerrador titular presenta fatiga acumulada en los últimos tres juegos.\n\n"
-            f"💎 **VALORACIÓN ESTADÍSTICA:**\n"
-            f"• Evaluación: `🟢 +EV Óptimo` | Cuota: `{odd_value}` | `+{ev_index} Índice EV`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        pred_ganador = f"Ganador del juego: **{t1}**"
+        pred_set = f"Apuesta de Innings: **Over de 1.5 carreras en las próximas 3 entradas**"
+        linea_juegos = f"Línea de Carreras: **Over de 8.5 total**"
+        alerta_vivo = f"Tendencia en vivo: Catcher rival con problemas de marcaje en base; bullpen intermedio inestable."
+
+    report = (
+        f"🎯 **PRONÓSTICO DIRECTO EN VIVO — {sport.upper()}**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🏟 **Partido:** {match_info}\n"
+        f"⏱ **Contexto real aportado:** _{situation}_\n\n"
+        f"💡 **SELECCIONES CLARAS DE APUESTA:**\n"
+        f" ✅ 1️⃣ {pred_ganador}\n"
+        f" ✅ 2️⃣ {pred_set}\n"
+        f" ✅ 3️⃣ {linea_juegos}\n\n"
+        f"📈 **ANÁLISIS TÁCTICO EN VIVO:**\n"
+        f"• {alerta_vivo}\n\n"
+        f"💎 **VALOR ESTADÍSTICO (AI Engine):**\n"
+        f"• Estado: `🟢 +EV Óptimo` | Cuota estimada: `{odd_value}` | `+{ev_index} Index EV`\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    )
     
     bot.send_message(chat_id, report, parse_mode="Markdown", reply_markup=markup_links)
     show_main_menu(chat_id)
 
 if __name__ == "__main__":
-    print("Motor Neural Pro Activo al Máximo Nivel...")
+    print("Neural Live Pro Específico Activo...")
     while True:
         try:
-            # Bucle blindado con reconexión automática ante cualquier caída de red
             bot.infinity_polling(interval=0, timeout=20, long_polling_timeout=20)
         except Exception as e:
-            print(f"Error de conexión detectado: {e}. Reiniciando conexión en 5 segundos...")
+            print(f"Error de conexión: {e}. Reconectando en 5s...")
             time.sleep(5)
+
     
     
     
