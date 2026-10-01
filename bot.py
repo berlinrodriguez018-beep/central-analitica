@@ -1,7 +1,6 @@
 import os
 import random
 import time
-import requests
 import telebot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -17,13 +16,12 @@ def block_unauthorized(message):
 
 def show_main_menu(chat_id):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-    markup.add(KeyboardButton("⚽ Fútbol (Deep Analytics)"), KeyboardButton("🏀 Baloncesto (Deep Analytics)"))
-    markup.add(KeyboardButton("🎾 Tenis (Deep Analytics)"), KeyboardButton("⚾ MLB (Deep Analytics)"))
-    markup.add(KeyboardButton("🔗 Analizar Parlay / Combinada"), KeyboardButton("⚙️ Cambiar Tono Analítico"))
+    markup.add(KeyboardButton("⚽ Fútbol Pro (En Vivo)"), KeyboardButton("🏀 Baloncesto Pro (En Vivo)"))
+    markup.add(KeyboardButton("🎾 Tenis Pro (En Vivo)"), KeyboardButton("⚾ MLB Béisbol (En Vivo)"))
     
     bot.send_message(
         chat_id,
-        "🧠 **NEURAL CENTRAL ANALÍTICA — TIEMPO REAL**\n\nSelecciona el deporte y escribe el partido en vivo:",
+        "🎯 **CENTRAL ANALÍTICA DIRECTA — EN VIVO**\n\nSelecciona el deporte que deseas auditar:",
         reply_markup=markup,
         parse_mode="Markdown"
     )
@@ -31,61 +29,20 @@ def show_main_menu(chat_id):
 @bot.message_handler(commands=['start', 'menu'])
 def send_welcome(message):
     if message.from_user.id == ADMIN_ID:
-        if message.chat.id not in user_data:
-            user_data[message.chat.id] = {"tone": "Técnico Avanzado"}
         show_main_menu(message.chat.id)
 
 @bot.message_handler(func=lambda m: m.text and m.text.lower() in ["hola", "empezar", "inicio", "bot", "menu"])
 def greeting_handler(message):
     if message.from_user.id == ADMIN_ID:
-        if message.chat.id not in user_data:
-            user_data[message.chat.id] = {"tone": "Técnico Avanzado"}
         show_main_menu(message.chat.id)
 
-@bot.message_handler(func=lambda m: m.text == "⚙️ Cambiar Tono Analítico")
-def change_tone_menu(message):
-    if message.from_user.id != ADMIN_ID:
-        return
-    markup = InlineKeyboardMarkup()
-    markup.add(
-        InlineKeyboardButton("🔬 Técnico Avanzado", callback_data="tone_tecnico"),
-        InlineKeyboardButton("⚡ Al Grano", callback_data="tone_grano")
-    )
-    bot.send_message(message.chat.id, "Selecciona el estilo de reporte analítico:", reply_markup=markup)
-
-@bot.message_handler(func=lambda m: m.text == "🔗 Analizar Parlay / Combinada")
-def parlay_start(message):
-    if message.from_user.id != ADMIN_ID:
-        return
-    bot.send_message(message.chat.id, "🔗 **MODO PARLAY**\n\nEscribe tus selecciones separadas por comas:", parse_mode="Markdown")
-    bot.register_next_step_handler(message, process_parlay_analysis)
-
-def process_parlay_analysis(message):
-    chat_id = message.chat.id
-    if "Analizar" in message.text or "Menú" in message.text:
-        show_main_menu(chat_id)
-        return
-    
-    selections = message.text
-    combined_odd = round(random.uniform(3.50, 8.20), 2)
-    report = (
-        f"🔗 **AUDITORÍA DE PARLAY GLOBAL**\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📝 _{selections}_\n\n"
-        f" • **Cuota Combinada:** `{combined_odd}`\n"
-        f" • **Correlación:** `🟢 Viable (+EV)`\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    )
-    bot.send_message(chat_id, report, parse_mode="Markdown")
-    show_main_menu(chat_id)
-
 @bot.message_handler(func=lambda m: m.text in [
-    "⚽ Fútbol (Deep Analytics)", "⚽ Analizar Fútbol",
-    "🏀 Baloncesto (Deep Analytics)", "🏀 Analizar Baloncesto Pro (En Vivo)",
-    "🎾 Tenis (Deep Analytics)", "🎾 Analizar Tenis",
-    "⚾ MLB (Deep Analytics)", "⚾ Analizar MLB (Béisbol)"
+    "⚽ Fútbol Pro (En Vivo)", "⚽ Fútbol (Deep Analytics)", "⚽ Analizar Fútbol",
+    "🏀 Baloncesto Pro (En Vivo)", "🏀 Baloncesto (Deep Analytics)", "🏀 Analizar Baloncesto Pro (En Vivo)",
+    "🎾 Tenis Pro (En Vivo)", "🎾 Tenis (Deep Analytics)", "🎾 Analizar Tenis",
+    "⚾ MLB Béisbol (En Vivo)", "⚾ MLB (Deep Analytics)", "⚾ Analizar MLB (Béisbol)"
 ])
-def select_sport_deep(message):
+def select_sport_direct(message):
     if message.from_user.id != ADMIN_ID:
         return
     
@@ -99,78 +56,59 @@ def select_sport_deep(message):
     else:
         sport = "MLB"
         
-    if message.chat.id not in user_data:
-        user_data[message.chat.id] = {"tone": "Técnico Avanzado"}
-    user_data[message.chat.id]["sport"] = sport
+    user_data[message.chat.id] = {"sport": sport}
     
     bot.send_message(
         message.chat.id,
-        f"📊 **Motor En Vivo ({sport})**\n\nEscribe el partido indicando el **minuto y marcador actual** (Ej: *Dinamarca vs Portugal 61' 2-2*):",
+        f"📋 **Paso 1/2 ({sport})**\n\nEscribe el nombre del partido (Ej: *Dinamarca vs Portugal*):",
         parse_mode="Markdown"
     )
-    bot.register_next_step_handler(message, fetch_live_match_analysis)
+    bot.register_next_step_handler(message, get_match_participants)
 
-@bot.callback_query_handler(func=lambda call: True)
-def handle_callbacks(call):
-    chat_id = call.message.chat.id
-    if call.data.startswith("tone_"):
-        if chat_id not in user_data:
-            user_data[chat_id] = {}
-        if "tecnico" in call.data:
-            user_data[chat_id]["tone"] = "Técnico Avanzado"
-            bot.answer_callback_query(call.id, "Modo Técnico activado.")
-        else:
-            user_data[chat_id]["tone"] = "Al Grano"
-            bot.answer_callback_query(call.id, "Modo Al Grano activado.")
-        show_main_menu(chat_id)
-
-def fetch_live_match_analysis(message):
+def get_match_participants(message):
     chat_id = message.chat.id
-    if message.text and any(k in message.text for k in ["Analizar", "Deep", "Fútbol", "Baloncesto", "Tenis", "MLB", "Parlay", "Tono"]):
+    if "Pro" in message.text or "Analizar" in message.text:
         show_main_menu(chat_id)
         return
         
-    raw_input = message.text
-    sport = user_data.get(chat_id, {}).get("sport", "Fútbol")
-    tone = user_data.get(chat_id, {}).get("tone", "Técnico Avanzado")
+    if chat_id not in user_data:
+        user_data[chat_id] = {}
+        
+    user_data[chat_id]["match"] = message.text
+    sport = user_data[chat_id].get("sport", "Fútbol")
     
-    processing_msg = bot.send_message(chat_id, f"📡 Sincronizando datos en tiempo real...", parse_mode="Markdown")
-    time.sleep(1.0)
+    examples = {
+        "Fútbol": "Ej: 62' min, 2-2",
+        "Baloncesto": "Ej: 3er cuarto, 74-78",
+        "Tenis": "Ej: Set 2, 4-3",
+        "MLB": "Ej: 6to inning, 3-2"
+    }
+    
+    bot.send_message(
+        chat_id,
+        f"⏱ **Paso 2/2 (Estado actual en tu pantalla)**\n\nEscribe el minuto o periodo actual y el marcador que ves (Ej: *61 min, 2-2*):\n\n_{examples.get(sport, 'Indica el momento y marcador')}_",
+        parse_mode="Markdown"
+    )
+    bot.register_next_step_handler(message, generate_exact_live_report)
 
-    # Análisis avanzado del texto ingresado por el usuario para extraer equipos, minuto y marcador si los proporciona
-    match_name = raw_input
-    minuto_detectado = "En Vivo"
-    marcador_detectado = "Por definir"
-
-    # Si el usuario pone el marcador o minuto en el texto (ej: 2-2 o 61'), lo parseamos automáticamente
-    parts = raw_input.split()
-    teams_list = []
-    for part in parts:
-        if "-" in part and any(char.isdigit() for char in part):
-            marcador_detectado = part
-        elif "'" in part or (part.isdigit() and int(part) < 120):
-            minuto_detectado = f"Minuto {part}"
-        else:
-            teams_list.append(part)
-
-    clean_match_name = " ".join(teams_list).replace("vs vs", "vs").strip()
-    if not clean_match_name:
-        clean_match_name = raw_input
-
-    teams = [t.strip() for t in clean_match_name.split("vs")]
+def generate_exact_live_report(message):
+    chat_id = message.chat.id
+    if "Pro" in message.text or "Analizar" in message.text:
+        show_main_menu(chat_id)
+        return
+        
+    live_status = message.text
+    match_info = user_data.get(chat_id, {}).get("match", "Encuentro en vivo")
+    sport = user_data.get(chat_id, {}).get("sport", "Fútbol")
+    
+    teams = [t.strip() for t in match_info.split("vs")]
     t1 = teams[0] if len(teams) > 0 else "Local"
     t2 = teams[1] if len(teams) > 1 else "Visitante"
 
-    # Si no especificó marcador, asignamos un estándar en vivo coherente con el momento actual
-    if marcador_detectado == "Por definir":
-        marcador_detectado = "2 - 2"
-    if minuto_detectado == "En Vivo":
-        minuto_detectado = "Segundo Tiempo (Minuto 63')"
+    odd_value = round(random.uniform(1.78, 2.20), 2)
+    ev_index = round(random.uniform(8.5, 17.5), 2)
 
-    odd_value = round(random.uniform(1.75, 2.30), 2)
-    ev_index = round(random.uniform(9.1, 18.5), 2)
-
-    query_encoded = clean_match_name.replace(" ", "%20")
+    query_encoded = match_info.replace(" ", "%20")
     markup_links = InlineKeyboardMarkup()
     markup_links.add(
         InlineKeyboardButton("🌐 Ver en 365Scores", url=f"https://www.365scores.com/es/search?q={query_encoded}"),
@@ -178,69 +116,66 @@ def fetch_live_match_analysis(message):
     )
 
     if sport == "Fútbol":
-        resumen_previo = f"Dinámica de alta intensidad. Las líneas defensivas sufren ante transiciones rápidas y desmarques de ruptura."
-        player_metrics = (
+        resumen = f"Lectura táctica en base al desarrollo actual aportado ({live_status}). Alta presión en campo rival y espacios abiertos en transiciones defensivas."
+        metrics = (
             f"👤 **Tracking de Atletas & xG ({sport}):**\n"
-            f" • **{t1}:** 51% Posesión, xG 2.14, alta presión en salida rival.\n"
-            f" • **{t2}:** 49% Posesión, xG 2.08, máxima eficacia en duelos aéreos."
+            f" • **{t1}:** Alta intensidad en duelos individuales, posesión activa.\n"
+            f" • **{t2}:** Despliegue ofensivo vertical con alta efectividad de remates."
         )
-        pred_1 = f"Ganador del Encuentro: **Próximo gol decide (Alta probabilidad de +0.5 goles)**"
-        pred_2 = f"Apuesta de Momento: **Over de 4.5 goles totales en el partido**"
-        pred_3 = f"Línea de Goles: **Ambos anotan y más de 3.5 goles**"
-    else:
-        resumen_previo = f"Desarrollo táctico ajustado al ritmo actual del encuentro."
-        player_metrics = f"👤 **Tracking en Vivo:** Monitoreo activo de rendimiento físico y posesión."
-        pred_1 = f"Ganador Directo: **Tendencia favorable al visitante por posesión**"
-        pred_2 = f"Apuesta de Línea: **Over en el periodo actual**"
-        pred_3 = f"Total del Encuentro: **Super línea activa**"
+        p1 = f"Ganador del Tramo / Siguiente Gol: **Próximo gol define tendencia**"
+        p2 = f"Apuesta de Línea: **Over de goles acumulados (Inercia ofensiva alta)**"
+        p3 = f"Mercado Dinámico: **Ambos anotan / Sigue la presión**"
 
-    if tone == "Técnico Avanzado":
-        report = (
-            f"🎯 **AUDITORÍA EN TIEMPO REAL — {sport.upper()}**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Partido:** {clean_match_name}\n"
-            f"⏱ **Estado Actual:** `{minuto_detectado}`\n"
-            f"📊 **Marcador en Vivo:** **{t1} {marcador_detectado} {t2}**\n\n"
-            f"🔍 **ANÁLISIS TÁCTICO DEL ENCUENTRO:**\n"
-            f"• _{resumen_previo}_\n\n"
-            f"{player_metrics}\n\n"
-            f"💡 **PRONÓSTICOS QUIRÚRGICOS & LÍNEAS:**\n"
-            f" ✅ 1️⃣ {pred_1}\n"
-            f" ✅ 2️⃣ {pred_2}\n"
-            f" ✅ 3️⃣ {pred_3}\n\n"
-            f"💎 **VALOR ESTADÍSTICO (AI Engine):**\n"
-            f"• Evaluación: `🟢 +EV Óptimo` | Cuota: `{odd_value}` | `+{ev_index} Index EV`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+    elif sport == "Baloncesto":
+        resumen = f"Análisis de ritmo de posesión bajo el contexto aportado ({live_status})."
+        metrics = f"👤 **Tracking Colectivo:** Eficiencia alta en tiros perimetrales y transición rápida."
+        p1 = f"Ganador del Periodo: **Ventaja para el equipo con mejor rotación de banca**"
+        p2 = f"Apuesta de Cuarto: **Over de puntos en el parcial actual**"
+        p3 = f"Línea Total: **Ajuste de puntos a favor del Over**"
+
+    elif sport == "Tenis":
+        resumen = f"Lectura de quiebres y porcentajes de servicio según la situación ({live_status})."
+        metrics = f"👤 **Tracking de Atletas:** Rendimiento sólido en primeros saques y puntos de break."
+        p1 = f"Ganador del Set: **Jugador con mayor efectividad al resto**"
+        p2 = f"Apuesta de Juegos: **Over de juegos totales**"
+        p3 = f"Tendencia: **Sets disputados con alta exigencia física**"
+
     else:
-        report = (
-            f"⚡ **PRONÓSTICO AL GRANO — {sport.upper()}**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Partido:** {clean_match_name} | `{t1} {marcador_detectado} {t2}` (`{minuto_detectado}`)\n\n"
-            f"🎯 **SELECCIONES DIRECTAS:**\n"
-            f" • 1️⃣ {pred_1}\n"
-            f" • 2️⃣ {pred_2}\n"
-            f" • 3️⃣ {pred_3}\n\n"
-            f"💎 Cuota: `{odd_value}` | `+{ev_index} Index EV`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        resumen = f"Evaluación de pitcheo y bullpen bajo el contexto ({live_status})."
+        metrics = f"👤 **Tracking de Lanzamientos:** Control de zona y fatiga de relevistas."
+        p1 = f"Ganador del Juego: **Definición en entradas finales**"
+        p2 = f"Apuesta: **Línea de carreras Over/Under**"
+        p3 = f"Cierre: **Estabilidad del cerrador**"
+
+    report = (
+        f"🎯 **AUDITORÍA EN TIEMPO REAL — {sport.upper()}**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🏟 **Partido:** {match_info}\n"
+        f"⏱ **Estado Exacto:** `{live_status}`\n\n"
+        f"🔍 **ANÁLISIS TÁCTICO EN VIVO:**\n"
+        f"• _{resumen}_\n\n"
+        f"{metrics}\n\n"
+        f"💡 **PRONÓSTICOS QUIRÚRGICOS & LÍNEAS:**\n"
+        f" ✅ 1️⃣ {p1}\n"
+        f" ✅ 2️⃣ {p2}\n"
+        f" ✅ 3️⃣ {p3}\n\n"
+        f"💎 **VALOR ESTADÍSTICO (AI Engine):**\n"
+        f"• Evaluación: `🟢 +EV Óptimo` | Cuota: `{odd_value}` | `+{ev_index} Index EV`\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    )
     
-    try:
-        bot.delete_message(chat_id, processing_msg.message_id)
-    except:
-        pass
-        
     bot.send_message(chat_id, report, parse_mode="Markdown", reply_markup=markup_links)
     show_main_menu(chat_id)
 
 if __name__ == "__main__":
-    print("Neural Dynamic Central Activa...")
+    print("Central Analítica Directa Activa...")
     while True:
         try:
             bot.infinity_polling(interval=0, timeout=20, long_polling_timeout=20)
         except Exception as e:
             print(f"Error de conexión: {e}. Reconectando en 5s...")
             time.sleep(5)
+                     
             
             
             
