@@ -2,8 +2,8 @@ import os
 import telebot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
-# Token configurado directamente para evitar fallos en Railway
-TOKEN = "AQUÍ_TU_TOKEN_REAL_DE_TELEGRAM"
+# Token configurado y listo para producción
+TOKEN = "8829957606:AAHL5P0y3FzfHuFTVMSk-9ZG69twJsD9S6I"
 bot = telebot.TeleBot(TOKEN)
 
 user_data = {}
@@ -106,6 +106,7 @@ def calculate_analytics(message):
 if __name__ == "__main__":
     print("Bot analítico con IA iniciado correctamente...")
     bot.infinity_polling()
+    
         
     
                      
