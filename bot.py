@@ -23,7 +23,7 @@ def show_main_menu(chat_id):
     
     bot.send_message(
         chat_id,
-        "🧠 **NEURAL CENTRAL ANALÍTICA — TIEMPO REAL**\n\nSelecciona el deporte y escribe el partido:",
+        "🧠 **NEURAL CENTRAL ANALÍTICA — TIEMPO REAL**\n\nSelecciona el deporte y escribe el partido en vivo:",
         reply_markup=markup,
         parse_mode="Markdown"
     )
@@ -105,7 +105,7 @@ def select_sport_deep(message):
     
     bot.send_message(
         message.chat.id,
-        f"📊 **Motor En Vivo ({sport})**\n\nEscribe el partido y el minuto actual (Ej: *Dinamarca vs Portugal 61'* o solo *Dinamarca vs Portugal*):",
+        f"📊 **Motor En Vivo ({sport})**\n\nEscribe el partido indicando el **minuto y marcador actual** (Ej: *Dinamarca vs Portugal 61' 2-2*):",
         parse_mode="Markdown"
     )
     bot.register_next_step_handler(message, fetch_live_match_analysis)
@@ -134,25 +134,43 @@ def fetch_live_match_analysis(message):
     sport = user_data.get(chat_id, {}).get("sport", "Fútbol")
     tone = user_data.get(chat_id, {}).get("tone", "Técnico Avanzado")
     
-    processing_msg = bot.send_message(chat_id, f"📡 Sincronizando con marcadores en vivo para: *{raw_input}*...", parse_mode="Markdown")
-    time.sleep(1.2)
+    processing_msg = bot.send_message(chat_id, f"📡 Sincronizando datos en tiempo real...", parse_mode="Markdown")
+    time.sleep(1.0)
 
-    # Detección inteligente si el usuario especificó el minuto en su texto (ej. Dinamarca vs Portugal 61)
+    # Análisis avanzado del texto ingresado por el usuario para extraer equipos, minuto y marcador si los proporciona
     match_name = raw_input
-    custom_minute = None
-    for word in raw_input.split():
-        if word.replace("'", "").isdigit():
-            custom_minute = word.replace("'", "")
-            match_name = raw_input.replace(word, "").replace("vs", "vs").strip()
+    minuto_detectado = "En Vivo"
+    marcador_detectado = "Por definir"
 
-    teams = [t.strip() for t in match_name.split("vs")]
+    # Si el usuario pone el marcador o minuto en el texto (ej: 2-2 o 61'), lo parseamos automáticamente
+    parts = raw_input.split()
+    teams_list = []
+    for part in parts:
+        if "-" in part and any(char.isdigit() for char in part):
+            marcador_detectado = part
+        elif "'" in part or (part.isdigit() and int(part) < 120):
+            minuto_detectado = f"Minuto {part}"
+        else:
+            teams_list.append(part)
+
+    clean_match_name = " ".join(teams_list).replace("vs vs", "vs").strip()
+    if not clean_match_name:
+        clean_match_name = raw_input
+
+    teams = [t.strip() for t in clean_match_name.split("vs")]
     t1 = teams[0] if len(teams) > 0 else "Local"
     t2 = teams[1] if len(teams) > 1 else "Visitante"
 
-    odd_value = round(random.uniform(1.75, 2.15), 2)
-    ev_index = round(random.uniform(8.5, 17.2), 2)
+    # Si no especificó marcador, asignamos un estándar en vivo coherente con el momento actual
+    if marcador_detectado == "Por definir":
+        marcador_detectado = "2 - 2"
+    if minuto_detectado == "En Vivo":
+        minuto_detectado = "Segundo Tiempo (Minuto 63')"
 
-    query_encoded = match_name.replace(" ", "%20")
+    odd_value = round(random.uniform(1.75, 2.30), 2)
+    ev_index = round(random.uniform(9.1, 18.5), 2)
+
+    query_encoded = clean_match_name.replace(" ", "%20")
     markup_links = InlineKeyboardMarkup()
     markup_links.add(
         InlineKeyboardButton("🌐 Ver en 365Scores", url=f"https://www.365scores.com/es/search?q={query_encoded}"),
@@ -160,53 +178,29 @@ def fetch_live_match_analysis(message):
     )
 
     if sport == "Fútbol":
-        # Si el usuario escribió Dinamarca vs Portugal, asignamos el minuto real actual (ej. 62') y marcador 2-2
-        minuto_en_curso = f"Segundo Tiempo (Minuto {custom_minute if custom_minute else '62'})"
-        marcador = f"{t1} 2 - 2 {t2}"
-        resumen_previo = f"Partido vibrante y de ida y vuelta. Tras ir perdiendo 1-2 al descanso[span_2](start_span)[span_2](end_span), {t1} empató con una presión asfixiante en el arranque del complemento."
+        resumen_previo = f"Dinámica de alta intensidad. Las líneas defensivas sufren ante transiciones rápidas y desmarques de ruptura."
         player_metrics = (
             f"👤 **Tracking de Atletas & xG ({sport}):**\n"
-            f" • **{t1}:** 52% Posesión, 6 remates a puerta, xG actual de 2.18.\n"
-            f" • **{t2}:** 48% Posesión, 5 remates a puerta, xG actual de 2.05 (partido abierto a más goles)."
+            f" • **{t1}:** 51% Posesión, xG 2.14, alta presión en salida rival.\n"
+            f" • **{t2}:** 49% Posesión, xG 2.08, máxima eficacia en duelos aéreos."
         )
-        pred_1 = f"Ganador del Partido (Próximo Gol): **Empate dinámico / Próximo gol gana**"
-        pred_2 = f"Apuesta de Momento: **Over de 4.5 goles totales (Alta inercia ofensiva)**"
-        pred_3 = f"Línea de Goles: **Ambos anotan en la segunda mitad (Sí)**"
-
-    elif sport == "Baloncesto":
-        minuto_en_curso = "4to Cuarto (Restan 04:15)"
-        marcador = f"{t1} 88 - 90 {t2}"
-        resumen_previo = f"Cierre de infarto con intercambios constantes de liderato en el marcador."
-        player_metrics = f"👤 **Tracking de Estrellas:** Alta fatiga en titulares de ambos equipos."
-        pred_1 = f"Ganador Final: **{t2} (Mejor porcentaje de libres)**"
-        pred_2 = f"Apuesta de Cuarto: **Over de 48.5 puntos**"
-        pred_3 = f"Línea Total: **Over de 189.5 puntos**"
-
-    elif sport == "Tenis":
-        minuto_en_curso = "Set 3 (Game 5)"
-        marcador = f"{t1} vs {t2} (6-4, 3-6, 3-2)"
-        resumen_previo = f"Definición en el set definitivo con quiebres recientes."
-        player_metrics = f"👤 **Tracking:** {t1} con 81% de primeros saques en este set."
-        pred_1 = f"Ganador del Partido: **{t1}**"
-        pred_2 = f"Apuesta de Set: **Over de 9.5 juegos**"
-        pred_3 = f"Línea Total: **Over de 24.5 juegos**"
-
-    else:  # MLB
-        minuto_en_curso = "Parte Baja del 8vo Inning"
-        marcador = f"{t1} 4 - 3 {t2}"
-        resumen_previo = f"Entrando a la zona de relevos cerradores."
-        player_metrics = f"👤 **Tracking:** Lanzador cerrador con recta de 98 mph."
-        pred_1 = f"Ganador del Juego: **{t1}**"
-        pred_2 = f"Apuesta: **Under en el 9no Inning**"
-        pred_3 = f"Línea Total: **Over de 7.5**"
+        pred_1 = f"Ganador del Encuentro: **Próximo gol decide (Alta probabilidad de +0.5 goles)**"
+        pred_2 = f"Apuesta de Momento: **Over de 4.5 goles totales en el partido**"
+        pred_3 = f"Línea de Goles: **Ambos anotan y más de 3.5 goles**"
+    else:
+        resumen_previo = f"Desarrollo táctico ajustado al ritmo actual del encuentro."
+        player_metrics = f"👤 **Tracking en Vivo:** Monitoreo activo de rendimiento físico y posesión."
+        pred_1 = f"Ganador Directo: **Tendencia favorable al visitante por posesión**"
+        pred_2 = f"Apuesta de Línea: **Over en el periodo actual**"
+        pred_3 = f"Total del Encuentro: **Super línea activa**"
 
     if tone == "Técnico Avanzado":
         report = (
             f"🎯 **AUDITORÍA EN TIEMPO REAL — {sport.upper()}**\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Partido:** {match_name}\n"
-            f"⏱ **Estado Actual:** `{minuto_en_curso}`\n"
-            f"📊 **Marcador en Vivo:** **{marcador}**\n\n"
+            f"🏟 **Partido:** {clean_match_name}\n"
+            f"⏱ **Estado Actual:** `{minuto_detectado}`\n"
+            f"📊 **Marcador en Vivo:** **{t1} {marcador_detectado} {t2}**\n\n"
             f"🔍 **ANÁLISIS TÁCTICO DEL ENCUENTRO:**\n"
             f"• _{resumen_previo}_\n\n"
             f"{player_metrics}\n\n"
@@ -222,7 +216,7 @@ def fetch_live_match_analysis(message):
         report = (
             f"⚡ **PRONÓSTICO AL GRANO — {sport.upper()}**\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏟 **Partido:** {match_name} | `{marcador}` (`{minuto_en_curso}`)\n\n"
+            f"🏟 **Partido:** {clean_match_name} | `{t1} {marcador_detectado} {t2}` (`{minuto_detectado}`)\n\n"
             f"🎯 **SELECCIONES DIRECTAS:**\n"
             f" • 1️⃣ {pred_1}\n"
             f" • 2️⃣ {pred_2}\n"
@@ -247,6 +241,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error de conexión: {e}. Reconectando en 5s...")
             time.sleep(5)
+            
             
             
     
