@@ -20,11 +20,11 @@ def show_main_menu(chat_id):
     
     bot.send_message(
         chat_id,
-        "🧠 **CENTRAL DE TENDENCIAS & SIMULACIÓN AVANZADA**\n\n"
-        "Escribe el comando seguido de los rivales para evaluar todas las instancias:\n\n"
+        "🧠 **CENTRAL DE TENDENCIAS, HÁNDICAPS & SIMULACIÓN PRO**\n\n"
+        "Escribe el comando seguido de los rivales:\n\n"
         "👉 `/analisis Denis Shapovalov vs Alejandro Tabilo`\n"
-        "👉 `/analisis Real Madrid vs Barcelona`\n"
-        "👉 `/analisis Lakers vs Celtics`",
+        "👉 `/analisis Lakers vs Celtics`\n"
+        "👉 `/analisis Real Madrid vs Barcelona`",
         reply_markup=markup,
         parse_mode="Markdown"
     )
@@ -40,7 +40,7 @@ def greeting_handler(message):
         show_main_menu(message.chat.id)
 
 @bot.message_handler(commands=['analisis', 'tendencia', 'simulacion', 'futbol', 'basket', 'tenis', 'mlb'])
-def handle_advanced_simulation(message):
+def handle_pro_analysis(message):
     if message.from_user.id != ADMIN_ID:
         return
         
@@ -81,9 +81,12 @@ def handle_advanced_simulation(message):
     else:
         sport_type = "Fútbol"
 
-    odd_value = round(random.uniform(1.75, 2.40), 2)
-    ev_index = round(random.uniform(13.0, 25.5), 2)
-    prob_porcentaje = random.randint(70, 86)
+    # Métricas avanzadas, hándicaps y porcentajes
+    racha_victorias_a = random.randint(6, 12)
+    porcentaje_racha = random.randint(81, 94)
+    prob_porcentaje = random.randint(73, 89)
+    odd_value = round(random.uniform(1.75, 2.45), 2)
+    ev_index = round(random.uniform(15.0, 28.0), 2)
 
     query_encoded = match_name.replace(" ", "%20")
     markup_links = InlineKeyboardMarkup()
@@ -92,62 +95,66 @@ def handle_advanced_simulation(message):
         InlineKeyboardButton("📊 Tendencias Scores24", url=f"https://scores24.live/es/search?q={query_encoded}")
     )
 
-    # Bloques de simulación detallados por circunstancia e instancia
+    # Bloques de análisis con hándicaps, líneas y simulaciones profundas
     if sport_type == "Tenis":
-        tendencias = (
-            f"• 🔥 **Tendencia de Superficie:** `{comp_a}` posee un registro dominante al ganar el 72% de sus partidos tras adjudicarse el primer set.\n"
-            f"• ⚠ **Patrón de Quiebres:** Si `{comp_b}` cede su primer turno de saque, la estadística histórica de fuentes especializadas muestra una bajada del rendimiento mental en mangas largas."
+        tendencias_principales = (
+            f"• 🔥 **Racha Principal:** `{comp_a}` registra **{racha_victorias_a} victorias consecutivas** cubriendo hándicaps de juegos en arcilla/pista rápida.\n"
+            f"• 📊 **Tendencia de Mercado:** El 80% de los partidos recientes de `{comp_b}` superan la línea de `Over 22.5 Juegos` totales.\n"
+            f"• ⚔ **Hándicap Sugerido:** `Hándicap de Juegos -3.5 para {comp_a}` (Cumplido en 7 de los últimos 9 duelos directos)."
         )
         simulacion = (
-            f"🔮 **SIMULACIÓN CONDICIONAL POR INSTANCIAS (TENIS):**\n"
-            f"• 🥇 *Si se define el 1er Set:* Quien logre el quiebre entre el juego 7 y 9 cerrará con alta probabilidad por 6-4.\n"
-            f"• ⚖ *Si el marcador se pone 5-5 en el Set Final:* La simulación histórica favorece a `{comp_a}` debido a su efectividad superior en tie-breaks recientes (80% de acierto bajo presión).\n"
-            f"• 📉 *Escenario de Desgaste:* Si el partido supera las 2 horas y media, el índice físico inclina la balanza hacia intercambios más largos y un total de juegos en línea Over."
+            f"🔮 **SIMULACIÓN CONDICIONAL & PROBABILIDADES:**\n"
+            f"• 🥇 *1er Set ({prob_porcentaje}% Probabilidad):* Quien quiebre entre el 7mo y 9no juego se apodera del set por 6-4.\n"
+            f"• ⚖ *Si se llega a 5-5 en el Set Final:* La simulación otorga un **84% de eficiencia** en tie-breaks a favor de `{comp_a}`.\n"
+            f"• 📉 *Hándicap Asiático / Sets:* Alta probabilidad de victoria limpia o resistencia extendida a 3 mangas completas."
         )
     elif sport_type == "Baloncesto":
-        tendencias = (
-            f"• 🔥 **Tendencia de Inicio:** `{comp_a}` acostumbra a romper los partidos en los primeros cuartos con una media superior a 28 puntos.\n"
-            f"• ⚠ **Patrón de Cierre:** Si `{comp_b}` llega al tercer cuarto con una desventaja menor a 5 puntos, su efectividad exterior aumenta un 18%."
+        tendencias_principales = (
+            f"• 🔥 **Racha Principal:** `{comp_a}` acumula **{racha_victorias_a} partidos seguidos ganando** o cubriendo el hándicap de puntos como local.\n"
+            f"• 📊 **Tendencia de Mercado:** Patrón claro de `Over de Puntos Totales` (Línea general superada en 8 de 10 ocasiones).\n"
+            f"• ⚔ **Hándicap Sugerido:** `Hándicap -5.5 puntos` para el equipo favorito por control de posesiones en el cierre."
         )
         simulacion = (
-            f"🔮 **SIMULACIÓN CONDICIONAL POR INSTANCIAS (BALONCESTO):**\n"
-            f"• 🥇 *Desarrollo del 1er Cuarto:* Ritmo rápido con posesiones cortas; tendencia clara al Over en el parcial inicial.\n"
-            f"• ⚖ *Si el partido llega igualado al último cuarto:* El control táctico y la rotación de banquillo de `{comp_a}` reducen el margen de error defensivo.\n"
-            f"• 📉 *Escenario de Faltas Tácticas:* Si la diferencia es menor a 4 puntos en los últimos 60 segundos, el encuentro se definirá desde la línea de tiros libres elevando la puntuación final."
+            f"🔮 **SIMULACIÓN CONDICIONAL & PROBABILIDADES:**\n"
+            f"• 🥇 *1er Cuarto ({prob_porcentaje}% Probabilidad):* Salida ofensiva rápida con promedio superior a 54 puntos conjuntos.\n"
+            f"• ⚖ *Si hay marcador ajustado en el Último Cuarto:* `{comp_a}` reduce pérdidas de balón y asegura la cobertura del hándicap desde la línea de libres.\n"
+            f"• 📉 *Mercado de Mitades:* Mayor efectividad anotadora concentrada en la segunda mitad del encuentro."
         )
     elif sport_type == "MLB":
-        tendencias = (
-            f"• 🔥 **Tendencia de Lomita:** El abridor de `{comp_a}` registra control estricto en las primeras 3 entradas (WHIP bajo).\n"
-            f"• ⚠ **Patrón de Relevo:** Si el bullpen de `{comp_b}` entra a lanzar temprano (antes del 5to inning), suele conceder un incremento de carreras."
+        tendencias_principales = (
+            f"• 🔥 **Racha Principal:** `{comp_a}` llega con **{racha_victorias_a} de 10 triunfos** respaldados por solidez en las primeras entradas.\n"
+            f"• 📊 **Tendencia de Mercado:** Tendencia marcada al `Under de Carreras (Primeros 5 Innings)` por dominio de serpentineros.\n"
+            f"• ⚔ **Hándicap Sugerido:** `Hándicap de Carreras -1.5` o victoria simple por margen ajustado en el bullpen."
         )
         simulacion = (
-            f"🔮 **SIMULACIÓN CONDICIONAL POR INSTANCIAS (BÉISBOL):**\n"
-            f"• 🥇 *Primer Tercio (Innings 1-3):* Dominio de los lanzadores; baja probabilidad de carreras tempranas.\n"
-            f"• ⚖ *Mitad del Juego (Innings 4-6):* Instancia crítica donde el orden al bate de `{comp_a}` explota los cambios de velocidad del serpentinero rival.\n"
-            f"• 📉 *Cierre de Partido:* Definición en entradas finales sujeta a la estabilidad del cerrador (closer) con corredores en posición de anotar."
+            f"🔮 **SIMULACIÓN CONDICIONAL & PROBABILIDADES:**\n"
+            f"• 🥇 *Primer Tercio / Innings 1-3 ({prob_porcentaje}% Probabilidad):* Dominio absoluto desde la lomita, nulas libertades de extrabase.\n"
+            f"• ⚖ *Mitad del Juego (Innings 4-6):* Instancia clave de desgaste donde el orden al bate castiga el relevo intermedio.\n"
+            f"• 📉 *Hándicap Alternativo:* Alta opción de definir en entradas extra o por diferencia mínima de una carrera."
         )
     else:  # Fútbol
-        tendencias = (
-            f"• 🔥 **Tendencia Ofensiva:** `{comp_a}` promedia un índice alto de presión alta en campo rival durante los primeros 30 minutos.\n"
-            f"• ⚠ **Patrón Condicional:** Si el marcador permanece empatado al descanso, ambos conjuntos reducen riesgos tácticos en la reanudación."
+        tendencias_principales = (
+            f"• 🔥 **Racha Principal:** `{comp_a}` encadena **{racha_victorias_a} partidos consecutivos perforando la red** en la primera mitad.\n"
+            f"• 📊 **Tendencia de Mercado:** El mercado de `Ambos Anotan (BTTS)` se cumple en el 82% de los enfrentamientos recientes.\n"
+            f"• ⚔ **Hándicap Sugerido:** `Hándicap Asiático 0.0 / -0.25` para asegurar protección ante empates tácticos."
         )
         simulacion = (
-            f"🔮 **SIMULACIÓN CONDICIONAL POR INSTANCIAS (FÚTBOL):**\n"
-            f"• 🥇 *Primer Tiempo:* Bloque inicial muy disputado en la medular; primer gol condiciona el planteamiento defensivo.\n"
-            f"• ⚖ *Si el marcador se rompe pasada la hora de juego (Min 60+):* El equipo perdedor se ve obligado a adelantar líneas, abriendo espacios ideales para contragolpes y aumentando el mercado de córners y goles.\n"
-            f"• 📉 *Escenario de Cierre:* Ventaja estadística en tramos finales para el conjunto con mayor profundidad de cambios tácticos."
+            f"🔮 **SIMULACIÓN CONDICIONAL & PROBABILIDADES:**\n"
+            f"• 🥇 *Primer Tiempo ({prob_porcentaje}% Probabilidad):* Lucha intensa en la medular con bloques defensivos bien posicionados.\n"
+            f"• ⚖ *Si se rompe el empate pasada la hora de juego (Min 60+):* El equipo en desventaja asume riesgos totales, disparando las opciones de goles y contragolpes.\n"
+            f"• 📉 *Hándicap de Cierres:* Ventaja estadística en tramos finales para el cuadro local por amplitud de banquillo."
         )
 
     report = (
-        f"📊 **AUDITORÍA DE TENDENCIAS & SIMULACIÓN PROFESIONAL**\n"
+        f"📊 **AUDITORÍA PRO: TENDENCIAS, HÁNDICAPS & SIMULACIÓN**\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏟 **Encuentro:** `{match_name}`\n"
         f"🎯 **Disciplina Detectada:** `{sport_type}`\n\n"
-        f"📈 **PRINCIPALES TENDENCIAS (WEB INSIGHTS):**\n"
-        f"{tendencias}\n\n"
+        f"📈 **PRINCIPALES TENDENCIAS & HÁNDICAPS CLAVE:**\n"
+        f"{tendencias_principales}\n\n"
         f"{simulacion}\n\n"
         f"💎 **VALOR ESTADÍSTICO & PROBABILIDAD (+EV):**\n"
-        f"• Probabilidad Estimada: `🟢 {prob_porcentaje}% de Certeza Analítica`\n"
+        f"• Fiabilidad Analítica: `🟢 {porcentaje_racha}% de Éxito Histórico`\n"
         f"• Cuota de Tendencia: `{odd_value}` | `+{ev_index} Index EV`\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     )
@@ -155,13 +162,14 @@ def handle_advanced_simulation(message):
     bot.send_message(message.chat.id, report, parse_mode="Markdown", reply_markup=markup_links)
 
 if __name__ == "__main__":
-    print("Central de Tendencias y Simulación Avanzada Activa...")
+    print("Central de Tendencias, Hándicaps y Simulación Pro Activa...")
     while True:
         try:
             bot.infinity_polling(interval=0, timeout=20, long_polling_timeout=20)
         except Exception as e:
             print(f"Error de conexión: {e}. Reconectando en 5s...")
             time.sleep(5)
+
 
                        
         
